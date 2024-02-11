@@ -64,10 +64,10 @@ export class AdminController {
 
   @Get('/')
   private async getInfo(req: Request, res: Response) {
-    if (!req.body || !req.body.staff) {
+    if (!req.params || !req.params.staff_name) {
       return res.json({ error: 'No access' });
     }
-    if (!Cache.staff.includes(req.body.staff)) {
+    if (!Cache.staff.includes(req.params.staff_name)) {
       return res.json({ error: 'No access' });
     }
 
