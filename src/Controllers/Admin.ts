@@ -53,21 +53,21 @@ export class AdminController {
     return true;
   }
 
-  @Get('reset')
-  private async resetCache(req: Request, res: Response) {
-    if (!Cache.staff.includes(req.body.staff_name))
-      return res.json({ error: 'No access' });
+  // @Get('reset')
+  // private async resetCache(req: Request, res: Response) {
+  //   if (!Cache.staff.includes(req.body.staff_name))
+  //     return res.json({ error: 'No access' });
 
-    await this.init();
-    return res.json({ message: 'Success' });
-  }
+  //   await this.init();
+  //   return res.json({ message: 'Success' });
+  // }
 
   @Get('/')
   private async getInfo(req: Request, res: Response) {
-    if (!req.params || !req.params.staff_name) {
+    if (!req.params || !req.query.staff_name) {
       return res.json({ error: 'No access' });
     }
-    if (!Cache.staff.includes(req.params.staff_name)) {
+    if (!Cache.staff.includes(req.query.staff_name as string)) {
       return res.json({ error: 'No access' });
     }
 

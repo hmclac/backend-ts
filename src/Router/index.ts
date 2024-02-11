@@ -1,6 +1,6 @@
 import { Server } from '@overnightjs/core';
 import express from 'express';
-import { json, urlencoded } from 'body-parser';
+import { json, urlencoded,  } from 'body-parser';
 import { logger } from '..';
 import { StatusCodes } from 'http-status-codes';
 import cors, { CorsOptions } from 'cors';
@@ -27,6 +27,7 @@ export class Router extends Server {
     this.app.use('/uploads', express.static('uploads'));
     this.app.use(cors(corsOptions as CorsOptions));
     this.app.use(cp());
+    this.app.use
 
     this.setup();
   }
