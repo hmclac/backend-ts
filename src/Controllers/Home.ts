@@ -44,46 +44,40 @@ export class HomeController {
       .orderBy('bike.time_checked_out', 'DESC')
       .getMany();
 
-    if (!latestBikeRentals) return res.send({ error: 'Bike error ' });
+    // if (!latestBikeRentals) return res.send({ error: 'Bike error ' });
     const latestCheckouts = await this.checkouts
       .createQueryBuilder('checkout')
       .where('checkout.time_checked_in IS NULL')
       .orderBy('checkout.time_checked_out', 'DESC')
       .getMany();
-    if (!latestCheckouts) return res.send({ error: 'Checkout error ' });
+    // if (!latestCheckouts) return res.send({ error: 'Checkout error ' });
     const latestHeadcount = await this.headcounts
       .createQueryBuilder('headcount')
       .orderBy('headcount.time_done', 'DESC')
       .getOne();
 
-    if (!latestHeadcount) return res.send({ error: 'Headcount error ' });
-
-    const {
-      weight_room,
-      gym,
-      aerobics_room,
-      lobby,
-      weight_reserved,
-      gym_reserved,
-      aerobics_reserved
-    } = latestHeadcount;
+    // if (!latestHeadcount) return res.send({ error: 'Headcount error ' });
 
     const bikeData = {};
     for (const b of Cache.bikes) {
-      const a = latestBikeRentals.find((x) => x.bike_number === b);
-      bikeData[b] = a ? { checked_out_for: a.time_checked_out } : false;
+      if (latestBikeRentals) {
+        const a = latestBikeRentals.find((x) => x.bike_number === b);
+        bikeData[b] = a ? { checked_out_for: a.time_checked_out } : false;
+      } else bikeData[b] = false;
     }
 
     const checkoutData = {};
     for (const c of Cache.equipment) {
-      const a = latestCheckouts.find((x) => x.equipment_type === c);
+      if (latestCheckouts) {
+        const a = latestCheckouts.find((x) => x.equipment_type === c);
 
-      // console.log(a?.time_checked_out || 'a');
-      checkoutData[c] = a
-        ? {
-            checked_out_for: NowSinceHour(a.time_checked_out)
-          }
-        : false;
+        // console.log(a?.time_checked_out || 'a');
+        checkoutData[c] = a
+          ? {
+              checked_out_for: NowSinceHour(a.time_checked_out)
+            }
+          : false;
+      } else checkoutData[c] = false;
     }
 
     const weightData = Cache.occupancy('weight_room');
@@ -92,23 +86,32 @@ export class HomeController {
     const lobbyData = Cache.occupancy('lobby');
 
     return res.json({
-      headcount_last_updated: ToHour(Number(latestHeadcount.time_done)),
+      headcount_last_updated: ToHour(
+        Number(latestHeadcount ? latestHeadcount.time_done : '0')
+      ),
       weightRoom: {
-        reserved: weight_reserved,
-        count: weight_room,
-        data: weightData
+        reserved: latestHeadcount ? latestHeadcount.weight_reserved : false,
+        count: latestHeadcount ? latestHeadcount.weight_room : 0,
+        data: weightData || []
       },
-      gym: { reserved: gym_reserved, count: gym, data: gymData },
+      gym: {
+        reserved: latestHeadcount ? latestHeadcount.gym_reserved : false,
+        count: latestHeadcount ? latestHeadcount.gym : 0,
+        data: gymData || []
+      },
       aerobics: {
-        reserved: aerobics_reserved,
-        count: aerobics_room,
-        data: aerobicsData
+        reserved: latestHeadcount ? latestHeadcount.aerobics_reserved : false,
+        count: latestHeadcount ? latestHeadcount.aerobics_room : 0,
+        data: aerobicsData || []
       },
-      lobby: { count: lobby, data: lobbyData },
-      checkout: checkoutData,
-      bikes: bikeData,
-      bikeUpdate: Cache.bikeupdate,
-      checkoutUpdate: Cache.checkoutupdate
+      lobby: {
+        count: latestHeadcount ? latestHeadcount.lobby : 0,
+        data: lobbyData || []
+      },
+      checkout: checkoutData || [],
+      bikes: bikeData || [],
+      bikeUpdate: Cache.bikeupdate || '',
+      checkoutUpdate: Cache.checkoutupdate || ''
     });
   }
 }
