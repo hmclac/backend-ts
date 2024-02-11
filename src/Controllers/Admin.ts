@@ -64,6 +64,13 @@ export class AdminController {
 
   @Get('/')
   private async getInfo(req: Request, res: Response) {
+    if (!req.body || !req.body.staff) {
+      return res.json({ error: 'No access' });
+    }
+    if (!Cache.staff.includes(req.body.staff)) {
+      return res.json({ error: 'No access' });
+    }
+
     return res.json({
       bikes: Cache.bikes,
       staff: Cache.staff,
