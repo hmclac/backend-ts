@@ -1,6 +1,8 @@
 import { Column, Entity, PrimaryColumn } from 'typeorm';
 import { Equipments, Staff, Bikes } from '../Util/Cache';
 
+// import Joi, { object } from 'joi';
+
 @Entity('admin')
 export class Admin {
   @PrimaryColumn()

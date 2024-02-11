@@ -1,5 +1,4 @@
 import { DataSource, Repository, ObjectLiteral, EntityTarget } from 'typeorm';
-import { TypeORMModels } from '../Interfaces';
 import { Bike, Swipe, Headcount, Checkout, Admin } from '../Models';
 import 'reflect-metadata';
 import { logger } from '../';
@@ -8,6 +7,11 @@ import { config } from '../config';
 // DataSource configuration
 
 const { host, username, password, database } = config;
+
+
+interface TypeORMModels {
+  [key: string]: Repository<any>;
+}
 
 const AppDataSource = new DataSource({
   type: 'postgres',
