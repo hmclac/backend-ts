@@ -1,0 +1,10 @@
+# Build files (The built project.)
+build/
+
+# Useless stuff that will probably take up your entire hdd.
+node_modules/ 
+yarn.lock
+
+# Envronment Variables (Stuff we should NEVER share with anyone)
+.env
+config.ts
