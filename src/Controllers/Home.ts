@@ -21,6 +21,7 @@ export class HomeController {
     this.bikes = dataSource.getRepository(Bike);
     this.checkouts = dataSource.getRepository(Checkout);
     this.headcounts = dataSource.getRepository(Headcount);
+    Cache.setup();
     // this.swipes = dataSource.getRepository(Swipe);
   }
   @Get('/')
