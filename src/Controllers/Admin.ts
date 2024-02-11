@@ -64,8 +64,8 @@ export class AdminController {
 
   @Get('/')
   private async getInfo(req: Request, res: Response) {
-    console.log(req);
-    if (!req.params || !req.query.staff_name) {
+    console.log(req.query);
+    if (!req.query || !req.query.staff_name) {
       return res.json({ error: 'No access' });
     }
     if (!Cache.staff.includes(req.query.staff_name as string)) {
