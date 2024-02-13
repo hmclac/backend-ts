@@ -40,19 +40,19 @@ export class HeadcountController {
 
     Cache.addOccupancy('weight_room', {
       time: NowHour(),
-      count: body.weight_room
+      count: newhead.weight_room
     });
     Cache.addOccupancy('gym', {
       time: NowHour(),
-      count: body.gym
+      count: newhead.gym
     });
     Cache.addOccupancy('aerobics_room', {
       time: NowHour(),
-      count: body.aerobics_room
+      count: newhead.aerobics_room
     });
     Cache.addOccupancy('lobby', {
       time: NowHour(),
-      count: body.lobby
+      count: newhead.lobby
     });
 
     return res
