@@ -25,7 +25,6 @@ export class HistoryController {
       .orderBy('swipe.time_done', 'DESC')
       .getMany();
 
-    console.log(swipes);
     const start = Number(startDate);
     const end = Number(endDate);
     const countsPerHour: { [key: string]: number } = {};
@@ -45,12 +44,10 @@ export class HistoryController {
         'America/Los_Angeles'
       );
       const key = hourWindowStart.format('HH:mm MM/DD/YYYY');
-      console.log(`Key for swipe: ${key}`); // Debug log
 
       if (countsPerHour[key] !== undefined) {
         countsPerHour[key]++;
       } else {
-        console.log(`Mismatched key: ${key}`); // This will help identify if any keys don't match
       }
     }
 
