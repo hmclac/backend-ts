@@ -18,7 +18,7 @@ import 'reflect-metadata';
 
 const corsOptions: CorsOptions = {
   origin: (o, c) =>
-    !!o && config.allowed_origins.includes(o)
+    !o || config.allowed_origins.includes(o)
       ? c(null, true)
       : c(new Error('Origin not allowed')),
   optionsSuccessStatus: 200,
