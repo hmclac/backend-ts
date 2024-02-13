@@ -4,8 +4,7 @@ export const DateHour = (date: any) => date.toFormat('HH:mm');
 
 export const NowMS = () => String(Date.now());
 
-export const NowHour = () =>
-  DT.now().setZone('America/Los_Angeles').toFormat('HH:mm');
+export const NowHour = () => DT.now().setZone('local').toFormat('HH:mm');
 
 export const ToHour = (date: number) => DT.fromMillis(date).toFormat('HH:mm');
 
