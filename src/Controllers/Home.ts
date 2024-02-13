@@ -1,6 +1,5 @@
 import { Controller, Get } from '@overnightjs/core';
 import { Request, Response } from 'express';
-import { StatusCodes } from 'http-status-codes';
 import { DataSource, Repository } from 'typeorm';
 import { Admin, Bike, Checkout, Headcount, Swipe } from '../Models';
 import { Cache } from '../Util/Cache';
@@ -22,19 +21,9 @@ export class HomeController {
     this.checkouts = dataSource.getRepository(Checkout);
     this.headcounts = dataSource.getRepository(Headcount);
     Cache.setup();
-    // this.swipes = dataSource.getRepository(Swipe);
   }
   @Get('/')
   private async getHome(req: Request, res: Response) {
-    try {
-      const ad = await this.admins.findOneBy({ id: 1 });
-    } catch (e) {
-      console.log(e);
-    }
-    const message: { errors: string[]; message: string } = {
-      errors: [],
-      message: ''
-    };
     const latestBikeRentals = await this.bikes
       .createQueryBuilder('bike')
       .where('bike.bike_number IN (:...bikeNumbers)', {
@@ -44,24 +33,22 @@ export class HomeController {
       .orderBy('bike.time_checked_out', 'DESC')
       .getMany();
 
-    // if (!latestBikeRentals) return res.send({ error: 'Bike error ' });
     const latestCheckouts = await this.checkouts
       .createQueryBuilder('checkout')
       .where('checkout.time_checked_in IS NULL')
       .orderBy('checkout.time_checked_out', 'DESC')
       .getMany();
-    // if (!latestCheckouts) return res.send({ error: 'Checkout error ' });
+
     const latestHeadcount = await this.headcounts
       .createQueryBuilder('headcount')
       .orderBy('headcount.time_done', 'DESC')
       .getOne();
 
-    // if (!latestHeadcount) return res.send({ error: 'Headcount error ' });
-
     const bikeData = {};
     for (const b of Cache.bikes) {
       if (latestBikeRentals) {
         const a = latestBikeRentals.find((x) => x.bike_number === b);
+
         bikeData[b] = a ? { checked_out_for: a.time_checked_out } : false;
       } else bikeData[b] = false;
     }
@@ -71,7 +58,6 @@ export class HomeController {
       if (latestCheckouts) {
         const a = latestCheckouts.find((x) => x.equipment_type === c);
 
-        // console.log(a?.time_checked_out || 'a');
         checkoutData[c] = a
           ? {
               checked_out_for: NowSinceHour(a.time_checked_out)

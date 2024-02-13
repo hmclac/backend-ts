@@ -6,6 +6,7 @@ import { Headcount } from '../Models';
 import { Cache } from '../Util/Cache';
 
 import { NowHour, NowMS, ToHour } from '../Util/DateTime';
+import { Protected, Required } from '../Util/Middleware';
 
 @Controller('headcount')
 export class HeadcountController {
@@ -16,44 +17,59 @@ export class HeadcountController {
   }
 
   @Post('/')
+  @Protected('staff', 'body')
+  @Required(
+    'body',
+    'weight_room',
+    'gym',
+    'aerobics_room',
+    'lobby',
+    'weight_reserved',
+    'gym_reserved',
+    'aerobics_reserved'
+  )
   private async updateHeadcount(req: Request, res: Response) {
-    if (!req.body) return res.json({ error: 'No body' });
     const body: HeadcountPayload = req.body;
-    if (!body.staff_name) return res.json({ error: 'No access' });
-
-    if (!Cache.staff.includes(body.staff_name))
-      return res.json({ error: 'No access!' });
+    const {
+      staff_name,
+      weight_room,
+      gym,
+      aerobics_room,
+      lobby,
+      weight_reserved,
+      gym_reserved,
+      aerobics_reserved
+    } = body;
 
     const newhead = this.headcounts.create({
-      staff_name: body.staff_name,
-      weight_room: body.weight_room || 0,
-      gym: body.gym || 0,
-      aerobics_room: body.aerobics_room || 0,
-      lobby: body.lobby || 0,
-      weight_reserved: body.weight_reserved || false,
-      gym_reserved: body.gym_reserved || false,
-      aerobics_reserved: body.aerobics_reserved || false,
+      staff_name,
+      weight_room,
+      gym,
+      aerobics_room,
+      lobby,
+      weight_reserved,
+      gym_reserved,
+      aerobics_reserved,
       time_done: NowMS()
     });
 
     await this.headcounts.save(newhead);
 
-    console.log(NowHour())
     Cache.addOccupancy('weight_room', {
       time: NowHour(),
-      count: newhead.weight_room
+      count: weight_room
     });
     Cache.addOccupancy('gym', {
       time: NowHour(),
-      count: newhead.gym
+      count: gym
     });
     Cache.addOccupancy('aerobics_room', {
       time: NowHour(),
-      count: newhead.aerobics_room
+      count: aerobics_room
     });
     Cache.addOccupancy('lobby', {
       time: NowHour(),
-      count: newhead.lobby
+      count: lobby
     });
 
     return res

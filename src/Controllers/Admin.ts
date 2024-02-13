@@ -1,10 +1,9 @@
 import { Controller, Get, Post, Delete } from '@overnightjs/core';
 import { Request, Response } from 'express';
-import { StatusCodes } from 'http-status-codes';
 import { DataSource, Repository } from 'typeorm';
 import { Admin } from '../Models/Admin';
 import { Bike, Cache, Equipment, StaffMember } from '../Util/Cache';
-import { config } from '../config';
+import { Protected, Required } from '../Util/Middleware';
 
 @Controller('admin')
 export class AdminController {
@@ -63,294 +62,258 @@ export class AdminController {
   // }
 
   @Get('/')
+  @Protected('admin', 'query')
   private async getInfo(req: Request, res: Response) {
-    console.log(req.query);
-    if (!req.query || !req.query.staff_name) {
-      return res.json({ error: 'No access' });
-    }
-    if (!Cache.staff.includes(req.query.staff_name as string)) {
-      return res.json({ error: 'No access!' });
-    }
+    if (!this.setup) return;
+    const { bikes, staff, equipment, bans, bikebans } = Cache;
 
     return res.json({
-      bikes: Cache.bikes,
-      staff: Cache.staff,
-      equipment: Cache.equipment,
-      bans: Cache.bans,
-      bikebans: Cache.bikebans
+      bikes,
+      staff,
+      equipment,
+      bans,
+      bikebans
     });
   }
 
   @Post('staff')
+  @Protected('admin', 'body')
+  @Required('body', 'staff')
   private async updateStaff(req: Request, res: Response) {
     if (!this.setup) return;
 
-    if (!req.body) return res.json({ error: 'No body' });
     const body: AdminPayload = req.body;
-    if (!Cache.staff.includes(body.staff_name))
-      return res.json({ error: 'No access' });
-    // if (!body.superuser_key) return res.json({ error: 'No access' });
+    const staff = body.staff!;
 
-    // if (body.superuser_key !== config.superuser_key)
-    //   return res.json({ error: 'No access!!' });
-
-    if (!body.staff) return res.json({ error: 'Invalid body' });
-
-    if (Cache.staff.includes(body.staff))
+    if (Cache.staff.includes(staff))
       return res.json({ error: 'Staff already added' });
 
     const ad = await this.admins.findOneBy({ id: 1 });
     if (!ad) throw new Error('oops');
 
-    ad.staff.push(body.staff);
+    ad.staff.push(staff);
 
     await this.admins.save(ad);
 
-    Cache.addStaff(body.staff);
+    Cache.addStaff(staff);
 
     return res.json({ message: 'Staff member added', staff: ad.staff });
   }
 
   @Delete('staff')
+  @Protected('admin', 'body')
+  @Required('body', 'staff')
   private async removeStaff(req: Request, res: Response) {
     if (!this.setup) return;
-
-    if (!req.body) return res.json({ error: 'No body' });
-    const body: AdminPayload = req.body;
-    if (!Cache.staff.includes(body.staff_name))
-      return res.json({ error: 'No access' });
 
     if (Cache.staff.length === 1) {
       return res.json({ error: "Can't delete last staff member" });
     }
-    // if (!body.superuser_key) return res.json({ error: 'No access' });
+    const body: AdminPayload = req.body;
+    const staff = body.staff!;
 
-    // if (body.superuser_key !== config.superuser_key)
-    //   return res.json({ error: 'No access!!' });
-
-    if (!body.staff) return res.json({ error: 'Invalid body' });
-
-    if (!Cache.staff.includes(body.staff))
+    if (!Cache.staff.includes(staff))
       return res.json({ error: 'Staff not added' });
 
     const ad = await this.admins.findOneBy({ id: 1 });
     if (!ad) throw new Error('oops');
 
-    ad.staff = ad.staff.filter((x) => x !== body.staff);
+    ad.staff = ad.staff.filter((x) => x !== staff);
 
     await this.admins.save(ad);
 
-    Cache.removeStaff(body.staff);
+    Cache.removeStaff(staff);
 
     return res.json({ message: 'Staff member removed', staff: ad.staff });
   }
 
   @Post('equipment')
+  @Protected('admin', 'body')
+  @Required('body', 'equipment')
   private async updateEquipment(req: Request, res: Response) {
     if (!this.setup) return;
 
-    if (!req.body) return res.json({ error: 'No body' });
     const body: AdminPayload = req.body;
-    if (!Cache.staff.includes(body.staff_name))
-      return res.json({ error: 'No access!' });
+    const equipment = body.equipment!;
 
-    if (!body.equipment) return res.json({ error: 'Invalid body' });
-
-    if (Cache.equipment.includes(body.equipment))
+    if (Cache.equipment.includes(equipment))
       return res.json({ error: 'Equipment with that name already exists' });
 
     const ad = await this.admins.findOneBy({ id: 1 });
     if (!ad) throw new Error('oops');
 
-    ad.equipment.push(body.equipment);
+    ad.equipment.push(equipment);
 
     await this.admins.save(ad);
 
-    Cache.addEquipment(body.equipment);
+    Cache.addEquipment(equipment);
 
     return res.json({ message: 'Equipment added', equipment: ad.equipment });
   }
 
   @Delete('equipment')
+  @Protected('admin', 'body')
+  @Required('body', 'equipment')
   private async removeEquipment(req: Request, res: Response) {
     if (!this.setup) return;
 
-    if (!req.body) return res.json({ error: 'No body' });
     const body: AdminPayload = req.body;
-    if (!Cache.staff.includes(body.staff_name))
-      return res.json({ error: 'No access!' });
+    const equipment = body.equipment!;
 
-    if (!body.equipment) return res.json({ error: 'Invalid body' });
-
-    if (!body.equipment) return res.json({ error: 'Invalid body' });
-
-    if (!Cache.equipment.includes(body.equipment))
+    if (!Cache.equipment.includes(equipment))
       return res.json({ error: 'No existing equipment with that name' });
 
     const ad = await this.admins.findOneBy({ id: 1 });
     if (!ad) throw new Error('oops');
 
-    ad.equipment = ad.equipment.filter((x) => x !== body.equipment);
+    ad.equipment = ad.equipment.filter((x) => x !== equipment);
 
     await this.admins.save(ad);
 
-    Cache.removeEquipment(body.equipment);
+    Cache.removeEquipment(equipment);
 
     return res.json({ message: 'Equipment removed', equipment: ad.equipment });
   }
 
   @Post('bikes')
+  @Protected('admin', 'body')
+  @Required('body', 'bike')
   private async updateBikes(req: Request, res: Response) {
     if (!this.setup) return;
 
-    if (!req.body) return res.json({ error: 'No body' });
     const body: AdminPayload = req.body;
-    if (!Cache.staff.includes(body.staff_name))
-      return res.json({ error: 'No access!' });
+    const bike = Number(body.bike!);
 
-    if (!body.bike) return res.json({ error: 'Invalid body' });
-    body.bike = Number(body.bike);
-
-    if (Cache.bikes.includes(body.bike))
+    if (Cache.bikes.includes(bike))
       return res.json({ error: 'Bike with that number already exists' });
 
     const ad = await this.admins.findOneBy({ id: 1 });
     if (!ad) throw new Error('oops');
 
-    ad.bikes.push(body.bike);
+    ad.bikes.push(bike);
 
     await this.admins.save(ad);
 
-    Cache.addBike(body.bike);
+    Cache.addBike(bike);
 
     return res.json({ message: 'Bike added', bikes: ad.bikes });
   }
 
   @Delete('bikes')
+  @Protected('admin', 'body')
+  @Required('body', 'bike')
   private async removeBike(req: Request, res: Response) {
     if (!this.setup) return;
 
-    if (!req.body) return res.json({ error: 'No body' });
     const body: AdminPayload = req.body;
-    if (!Cache.staff.includes(body.staff_name))
-      return res.json({ error: 'No access!' });
+    const bike = Number(body.bike!);
 
-    if (!body.bike) return res.json({ error: 'Invalid body' });
-    body.bike = Number(body.bike);
-
-    if (!Cache.bikes.includes(body.bike))
+    if (!Cache.bikes.includes(bike))
       return res.json({ error: "Bike with that number doesn't exist" });
 
     const ad = await this.admins.findOneBy({ id: 1 });
     if (!ad) throw new Error('oops');
 
-    ad.bikes = ad.bikes.filter((x) => x !== body.bike);
+    ad.bikes = ad.bikes.filter((x) => x !== bike);
 
     await this.admins.save(ad);
 
-    Cache.removeBike(body.bike);
+    Cache.removeBike(bike);
 
     return res.json({ message: 'Bike removed', bikes: ad.bikes });
   }
+
   @Post('bans')
+  @Protected('admin', 'body')
+  @Required('body', 'bike')
   private async updateBans(req: Request, res: Response) {
     if (!this.setup) return;
 
-    if (!req.body) return res.json({ error: 'No body' });
     const body: AdminPayload = req.body;
-    if (!Cache.staff.includes(body.staff_name))
-      return res.json({ error: 'No access!' });
+    const ban = body.ban!;
 
-    if (!body.ban) return res.json({ error: 'Invalid body' });
-
-    if (Cache.bans.includes(body.ban))
+    if (Cache.bans.includes(ban))
       return res.json({ error: 'Ban with that number already exists' });
 
     const ad = await this.admins.findOneBy({ id: 1 });
     if (!ad) throw new Error('oops');
 
-    ad.banlist.push(body.ban);
+    ad.banlist.push(ban);
 
     await this.admins.save(ad);
 
-    Cache.addBan(body.ban);
+    Cache.addBan(ban);
 
     return res.json({ message: 'Ban added', bans: ad.banlist });
   }
 
   @Delete('bans')
+  @Protected('admin', 'body')
+  @Required('body', 'ban')
   private async removeBan(req: Request, res: Response) {
     if (!this.setup) return;
-
-    if (!req.body) return res.json({ error: 'No body' });
     const body: AdminPayload = req.body;
-    if (!Cache.staff.includes(body.staff_name))
-      return res.json({ error: 'No access!' });
+    const ban = body.ban!;
 
-    if (!body.ban) return res.json({ error: 'Invalid body' });
-
-    if (!Cache.bans.includes(body.ban))
+    if (!Cache.bans.includes(ban))
       return res.json({ error: "Ban with that number doesn't exist" });
 
     const ad = await this.admins.findOneBy({ id: 1 });
     if (!ad) throw new Error('oops');
 
-    ad.banlist = ad.banlist.filter((x) => x !== body.ban);
+    ad.banlist = ad.banlist.filter((x) => x !== ban);
 
     await this.admins.save(ad);
 
-    Cache.removeBan(body.ban);
+    Cache.removeBan(ban);
 
     return res.json({ message: 'Ban removed', bans: ad.banlist });
   }
 
   @Post('bikebans')
+  @Protected('admin', 'body')
+  @Required('body', 'bikeban')
   private async updateBikeBans(req: Request, res: Response) {
     if (!this.setup) return;
 
-    if (!req.body) return res.json({ error: 'No body' });
     const body: AdminPayload = req.body;
-    if (!Cache.staff.includes(body.staff_name))
-      return res.json({ error: 'No access!' });
+    const bikeban = body.bikeban!;
 
-    if (!body.bikeban) return res.json({ error: 'Invalid body' });
-
-    if (Cache.bans.includes(body.bikeban))
+    if (Cache.bans.includes(bikeban))
       return res.json({ error: 'Bike ban with that number already exists' });
 
     const ad = await this.admins.findOneBy({ id: 1 });
     if (!ad) throw new Error('oops');
 
-    ad.bikebans.push(body.bikeban);
+    ad.bikebans.push(bikeban);
 
     await this.admins.save(ad);
 
-    Cache.addBikeBan(body.bikeban);
+    Cache.addBikeBan(bikeban);
 
     return res.json({ message: 'Bike ban added', bikebans: ad.bikebans });
   }
+
   @Delete('bikebans')
+  @Protected('admin', 'body')
+  @Required('body', 'bikeban')
   private async removeBikeBan(req: Request, res: Response) {
     if (!this.setup) return;
 
-    if (!req.body) return res.json({ error: 'No body' });
     const body: AdminPayload = req.body;
-    if (!Cache.staff.includes(body.staff_name))
-      return res.json({ error: 'No access!' });
+    const bikeban = body.bikeban!;
 
-    if (!body.bikeban) return res.json({ error: 'Invalid body' });
-
-    if (!Cache.bans.includes(body.bikeban))
+    if (!Cache.bans.includes(bikeban))
       return res.json({ error: "Bike ban with that number doesn't exist" });
 
     const ad = await this.admins.findOneBy({ id: 1 });
     if (!ad) throw new Error('oops');
 
-    ad.bikebans = ad.bikebans.filter((x) => x !== body.bikeban);
+    ad.bikebans = ad.bikebans.filter((x) => x !== bikeban);
 
     await this.admins.save(ad);
 
-    Cache.removeBikeBan(body.bikeban);
+    Cache.removeBikeBan(bikeban);
 
     return res.json({ message: 'Ban added', bikebans: ad.bikebans });
   }

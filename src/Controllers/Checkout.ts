@@ -3,8 +3,9 @@ import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { DataSource, Repository } from 'typeorm';
 import { Checkout } from '../Models';
-import { Cache, Equipment } from '../Util/Cache';
+import { Cache } from '../Util/Cache';
 import { ToHour } from '../Util/DateTime';
+import { Protected, Required } from '../Util/Middleware';
 
 @Controller('checkout')
 export class CheckoutController {
@@ -15,14 +16,8 @@ export class CheckoutController {
   }
 
   @Put('/')
+  @Protected('staff', 'body')
   private async getCheckouts(req: Request, res: Response) {
-    if (!req.body) return res.json({ error: 'No body' });
-    const body: CheckoutPayload = req.body;
-    if (!body.staff_name) return res.json({ error: 'No access' });
-
-    if (!Cache.staff.includes(body.staff_name))
-      return res.json({ error: 'No access!' });
-
     const latestCheckouts = await this.checkouts
       .createQueryBuilder('checkout')
       .where('checkout.time_checked_in IS NULL')
@@ -50,30 +45,23 @@ export class CheckoutController {
   }
 
   @Post('/')
+  @Protected('staff', 'body')
+  @Required('body', 'update_type', 'equipment_type')
   private async updateCheckouts(req: Request, res: Response) {
-    if (!req.body) return res.json({ error: 'No body' });
     const body: CheckoutPayload = req.body;
-    if (!body.staff_name) return res.json({ error: 'No access', body });
-
-    if (!Cache.staff.includes(body.staff_name))
-      return res.json({ error: 'No access!' });
-
-    if (body.update_type === 'rent') {
-      if (
-        !body.equipment_type ||
-        !body.student_id ||
-        !body.email ||
-        !body.student_name
-      )
+    const { update_type, equipment_type, staff_name } = body;
+    if (update_type === 'rent') {
+      const { student_id, email, student_name } = body;
+      if (!student_id || !email || !student_name)
         return res.json({ error: 'Invalid body, missing fields' });
 
-      if (!Cache.equipment.map((x) => x).includes(body.equipment_type))
+      if (!Cache.equipment.map((x) => x).includes(equipment_type))
         return res.json({ error: 'Invalid body, invalid equipment' });
 
       const checkout = await this.checkouts
         .createQueryBuilder('checkout')
         .where('checkout.equipment_type = :equipmentType', {
-          equipmentType: body.equipment_type
+          equipmentType: equipment_type
         })
         .andWhere('checkout.time_checked_in IS NULL')
         .getOne();
@@ -82,12 +70,12 @@ export class CheckoutController {
         return res.json({ error: 'Invalid body, equipment already rented' });
 
       const newCheckout = this.checkouts.create({
-        rented_staff: body.staff_name,
-        equipment_type: body.equipment_type,
+        rented_staff: staff_name,
+        equipment_type,
         time_checked_out: String(Date.now()),
-        student_id: body.student_id,
-        student_name: body.student_name,
-        email: body.email
+        student_id,
+        student_name,
+        email
       });
 
       await this.checkouts.save(newCheckout);
@@ -99,13 +87,10 @@ export class CheckoutController {
         time_checked_out: newCheckout.time_checked_out
       });
     } else if (body.update_type === 'return') {
-      if (!body.equipment_type)
-        return res.json({ error: 'Invalid body, missing fields' });
-
       const checkout = await this.checkouts
         .createQueryBuilder('checkout')
         .where('checkout.equipment_type = :equipmentType', {
-          equipmentType: body.equipment_type
+          equipmentType: equipment_type
         })
         .andWhere('checkout.time_checked_in IS NULL')
         .getOne();
@@ -115,7 +100,7 @@ export class CheckoutController {
           error: 'Invalid body, equipment not being rented'
         });
 
-      checkout.returned_staff = body.staff_name;
+      checkout.returned_staff = staff_name;
       checkout.time_checked_in = String(Date.now());
 
       await this.checkouts.update(checkout.id, checkout);
@@ -134,7 +119,7 @@ export type CheckoutPayload = {
   update_type: 'rent' | 'return';
   staff_name: string;
   equipment_type: string;
-  student_id: string;
+  student_id?: string;
   email?: string;
   student_name?: string;
 };

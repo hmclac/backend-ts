@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { DataSource, Repository } from 'typeorm';
 import { Swipe } from '../Models';
 import * as moment from 'moment-timezone';
+import { Required } from '../Util/Middleware';
 
 @Controller('history')
 export class HistoryController {
@@ -62,16 +63,16 @@ export class HistoryController {
   }
 
   @Get('/')
+  @Required('query', 'date_start', 'date_end')
   private async getSwipes(req: Request, res: Response) {
     const query = req.query as SwipePayload;
-    if (!query || !query.date_start || !query.date_end)
-      return res.status(400).json({ error: 'Invalid query parameters' });
-
+    const { date_start, date_end } = query;
     try {
       const { data, labels } = await this.getData(
-        Number(query.date_start),
-        Number(query.date_end)
+        Number(date_start),
+        Number(date_end)
       );
+
       return res.status(200).json({ data, labels });
     } catch (e) {
       console.error(e);
