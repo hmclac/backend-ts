@@ -45,8 +45,12 @@ export class HistoryController {
         'America/Los_Angeles'
       );
       const key = hourWindowStart.format('HH:mm MM/DD/YYYY');
-      if (countsPerHour[key]) {
+      console.log(`Key for swipe: ${key}`); // Debug log
+
+      if (countsPerHour[key] !== undefined) {
         countsPerHour[key]++;
+      } else {
+        console.log(`Mismatched key: ${key}`); // This will help identify if any keys don't match
       }
     }
 
