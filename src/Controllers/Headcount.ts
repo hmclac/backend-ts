@@ -38,6 +38,7 @@ export class HeadcountController {
 
     await this.headcounts.save(newhead);
 
+    console.log(NowHour())
     Cache.addOccupancy('weight_room', {
       time: NowHour(),
       count: newhead.weight_room
