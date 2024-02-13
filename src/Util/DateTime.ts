@@ -7,10 +7,13 @@ export const NowMS = () => String(Date.now());
 export const NowHour = () =>
   DT.now().setZone('America/Los_Angeles').toFormat('HH:mm');
 
-export const ToHour = (date: number) => DT.fromMillis(date).toFormat('HH:mm');
+export const ToHour = (date: number) =>
+  DT.fromMillis(date).setZone('America/Los_Angeles').toFormat('HH:mm');
 
 export const NowSinceHour = (time: string) => {
-  const diff = DT.now().diff(DT.fromMillis(Number(time)));
+  const diff = DT.now()
+    .setZone('America/Los_Angeles')
+    .diff(DT.fromMillis(Number(time)));
   // Create a Duration object from the difference
   const duration = Duration.fromMillis(diff.as('milliseconds'));
   // Format the duration in hours and minutes
