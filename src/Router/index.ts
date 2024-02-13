@@ -1,6 +1,6 @@
 import { Server } from '@overnightjs/core';
 import express from 'express';
-import { json, urlencoded,  } from 'body-parser';
+import { json, urlencoded } from 'body-parser';
 import { logger } from '..';
 import { StatusCodes } from 'http-status-codes';
 import cors, { CorsOptions } from 'cors';
@@ -10,8 +10,17 @@ import * as Controllers from '../Controllers';
 import { config } from '../config';
 import 'reflect-metadata';
 
-const corsOptions = {
-  origin: config.frontend,
+// const corsOptions: CorsOptions = {
+//   origin: config.frontend,
+//   optionsSuccessStatus: 200,
+//   credentials: true
+// };
+
+const corsOptions: CorsOptions = {
+  origin: (o, c) =>
+    !!o && config.allowed_origins.includes(o)
+      ? c(null, true)
+      : c(new Error('Origin not allowed')),
   optionsSuccessStatus: 200,
   credentials: true
 };
@@ -27,7 +36,7 @@ export class Router extends Server {
     this.app.use('/uploads', express.static('uploads'));
     this.app.use(cors(corsOptions as CorsOptions));
     this.app.use(cp());
-    this.app.use
+    this.app.use;
 
     this.setup();
   }
