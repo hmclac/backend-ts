@@ -225,7 +225,7 @@ export class AdminController {
 
   @Post('bans')
   @Protected('admin', 'body')
-  @Required('body', 'bike')
+  @Required('body', 'ban')
   private async updateBans(req: Request, res: Response) {
     if (!this.setup) return;
 
