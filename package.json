@@ -21,6 +21,7 @@
     "joi": "^17.12.1",
     "jsonwebtoken": "^9.0.2",
     "luxon": "^3.4.4",
+    "moment-timezone": "^0.5.45",
     "multer": "^1.4.5-lts.1",
     "node-cache": "^5.1.2",
     "pg": "^8.11.3",

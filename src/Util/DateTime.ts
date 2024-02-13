@@ -1,6 +1,7 @@
 import { DateTime as DT, Duration } from 'luxon';
 
-export const DateHour = (date: any) => date.toFormat('HH:mm');
+export const DateHour = (date: any) =>
+  date.setZone('America/Los_Angeles').toFormat('HH:mm');
 
 export const NowMS = () => String(Date.now());
 
