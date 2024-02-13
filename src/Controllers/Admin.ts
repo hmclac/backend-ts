@@ -303,7 +303,7 @@ export class AdminController {
     const body: AdminPayload = req.body;
     const bikeban = body.bikeban!;
 
-    if (!Cache.bans.includes(bikeban))
+    if (!Cache.bikebans.includes(bikeban))
       return res.json({ error: "Bike ban with that number doesn't exist" });
 
     const ad = await this.admins.findOneBy({ id: 1 });
