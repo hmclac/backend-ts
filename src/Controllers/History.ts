@@ -25,6 +25,7 @@ export class HistoryController {
       .orderBy('swipe.time_done', 'DESC')
       .getMany();
 
+    console.log(swipes);
     const start = Number(startDate);
     const end = Number(endDate);
     const countsPerHour: { [key: string]: number } = {};
