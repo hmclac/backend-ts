@@ -46,7 +46,8 @@ export class BikesController {
           student_id: a.student_id,
           email: a.email,
           date_due: DateDay(Number(a.date_due)),
-          renews: a.renews
+          renews: a.renews,
+          lock: a.lock
         };
       else
         bikeData[b] = {
@@ -71,7 +72,8 @@ export class BikesController {
         !body.bike_number ||
         !body.student_id ||
         !body.email ||
-        !body.student_name
+        !body.student_name ||
+        !body.lock
       )
         return res.json({ error: 'Invalid body, missing fields' });
 
@@ -99,7 +101,8 @@ export class BikesController {
         student_name: body.student_name,
         email: body.email,
         rented: true,
-        renews: 0
+        renews: 0,
+        lock: body.lock
       });
 
       await this.bikes.save(newBike);
@@ -167,4 +170,5 @@ export type BikePayload = {
   student_id: string;
   email?: string;
   student_name?: string;
+  lock?: string;
 };

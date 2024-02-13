@@ -37,4 +37,7 @@ export class Bike {
 
   @Column()
   public renews!: number;
+
+  @Column()
+  public lock!: string;
 }
