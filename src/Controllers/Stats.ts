@@ -84,14 +84,13 @@ export class StatsController {
     };
   }
 
-  @Get('/')
+  @Get('swipes')
   @Required('query', 'date_start', 'range')
   private async getSwipes(req: Request, res: Response) {
     const query = req.query as SwipePayload;
 
     if (query.range === 'true') {
       const { date_start, date_end } = query;
-      console.log(query);
       if (!date_end) {
         return res.json({ error: 'Missing date end field' });
       }
@@ -117,6 +116,18 @@ export class StatsController {
         return res.status(500).json({ error: 'Internal server error' });
       }
     }
+  }
+
+  @Get('leaderboard')
+  private async getLeaderboard(req: Request, res: Response) {
+    const swipeCounts: { staff_name: string; count: string }[] =
+      await this.swipes
+        .createQueryBuilder('swipe')
+        .select('swipe.staff_name', 'staff_name')
+        .addSelect('COUNT(*)', 'count')
+        .groupBy('swipe.staff_name')
+        .getRawMany();
+    return res.json(swipeCounts.map((x) => ({ ...x, count: Number(x.count) })));
   }
 }
 type SwipePayload = {
