@@ -1,22 +1,27 @@
 import { Controller, Get } from '@overnightjs/core';
 import { Request, Response } from 'express';
 import { DataSource, Repository } from 'typeorm';
-import { Admin, Bike, Checkout, Headcount, Swipe } from '../Models';
+import {
+  // Admin, Swipe,
+  Bike,
+  Checkout,
+  Headcount
+} from '../Models';
 import { Cache } from '../Util/Cache';
-import { NowSinceHour, ToHour } from '../Util/DateTime';
+import { DateHour, NowSinceHour, ToHour, startOfDay } from '../Util/DateTime';
 
 @Controller('/')
 export class HomeController {
   private bikes: Repository<Bike>;
   private checkouts: Repository<Checkout>;
-  private admins: Repository<Admin>;
+  // private admins: Repository<Admin>;
   private headcounts: Repository<Headcount>;
   // private swipes: Repository<Swipe>;
 
   public setup = false;
 
   constructor(dataSource: DataSource) {
-    this.admins = dataSource.getRepository(Admin);
+    // this.admins = dataSource.getRepository(Admin);
     this.bikes = dataSource.getRepository(Bike);
     this.checkouts = dataSource.getRepository(Checkout);
     this.headcounts = dataSource.getRepository(Headcount);
@@ -39,10 +44,24 @@ export class HomeController {
       .orderBy('checkout.time_checked_out', 'DESC')
       .getMany();
 
-    const latestHeadcount = await this.headcounts
+    // Convert startOfDay to a timestamp or format suitable for your database query
+    const startOfDayTimestamp = startOfDay.toMillis();
+    const headcounts = await this.headcounts
       .createQueryBuilder('headcount')
+      .where('headcount.time_done >= :startOfDay', {
+        startOfDay: startOfDayTimestamp
+      })
       .orderBy('headcount.time_done', 'DESC')
-      .getOne();
+      .getMany();
+
+    // Assuming DateHour is imported or defined elsewhere
+    // and assuming headcounts is an array of headcount entities
+    const headcount_labels = headcounts
+      .map((hc) => ToHour(Number(hc.time_done)))
+      .reverse();
+
+    // Assuming latestHeadcount is the first item of the sorted headcounts array
+    const latestHeadcount = headcounts[0];
 
     const bikeData = {};
     for (const b of Cache.bikes) {
@@ -66,33 +85,26 @@ export class HomeController {
       } else checkoutData[c] = false;
     }
 
-    const weightData = Cache.occupancy('weight_room');
-    const gymData = Cache.occupancy('gym');
-    const aerobicsData = Cache.occupancy('aerobics_room');
-    const lobbyData = Cache.occupancy('lobby');
-
     return res.json({
-      headcount_last_updated: ToHour(
-        Number(latestHeadcount ? latestHeadcount.time_done : '0')
-      ),
+      headcount_labels,
       weightRoom: {
         reserved: latestHeadcount ? latestHeadcount.weight_reserved : false,
         count: latestHeadcount ? latestHeadcount.weight_room : 0,
-        data: weightData || []
+        data: headcounts.map((hc) => hc.weight_room).reverse()
       },
       gym: {
         reserved: latestHeadcount ? latestHeadcount.gym_reserved : false,
         count: latestHeadcount ? latestHeadcount.gym : 0,
-        data: gymData || []
+        data: headcounts.map((hc) => hc.gym).reverse()
       },
       aerobics: {
         reserved: latestHeadcount ? latestHeadcount.aerobics_reserved : false,
         count: latestHeadcount ? latestHeadcount.aerobics_room : 0,
-        data: aerobicsData || []
+        data: headcounts.map((hc) => hc.aerobics_room).reverse()
       },
       lobby: {
         count: latestHeadcount ? latestHeadcount.lobby : 0,
-        data: lobbyData || []
+        data: headcounts.map((hc) => hc.lobby).reverse()
       },
       checkout: checkoutData || [],
       bikes: bikeData || [],

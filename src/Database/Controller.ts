@@ -4,8 +4,6 @@ import 'reflect-metadata';
 import { logger } from '../';
 import { config } from '../config';
 
-// DataSource configuration
-
 const { host, username, password, database } = config;
 
 
@@ -41,7 +39,7 @@ export class TypeORMController {
       swipe: this.dataSource.getRepository(Swipe),
       admin: this.dataSource.getRepository(Admin)
     };
-    Object.freeze(this.models); // Freezing the models object
+    Object.freeze(this.models); 
   }
 
   public async createConnection() {
@@ -51,20 +49,8 @@ export class TypeORMController {
       logger.err(e);
       process.exit(1);
     }
-
-    // Synchronization is handled via the `synchronize` option in the DataSource config.
   }
 
-  // public getModel<T extends ObjectLiteral>(model: string): Repository<T> {
-  //   if (!this.dataSource.isInitialized) {
-  //     throw new Error('The DataSource is not initialized yet!');
-  //   }
-  //   const repository = this.models[model];
-  //   if (!repository) {
-  //     throw new Error(`Repository for model ${model} not found`);
-  //   }
-  //   return repository as Repository<T>;
-  // }
   public getRepository<T extends ObjectLiteral>(
     entity: EntityTarget<T>
   ): Repository<T> {
@@ -80,7 +66,3 @@ export class TypeORMController {
   }
 }
 
-// Usage example
-// const typeORMController = new TypeORMController();
-// await typeORMController.createConnection();
-// const userRepo = typeORMController.getModel<UserAuthData>('userAuthData');

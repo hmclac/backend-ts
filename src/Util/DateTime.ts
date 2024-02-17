@@ -1,20 +1,15 @@
 import { DateTime as DT, Duration } from 'luxon';
 
-export const DateHour = (date: any) =>
-  date.setZone('America/Los_Angeles').toFormat('HH:mm');
+export const DateHour = (date: any) => date.toFormat('HH:mm');
 
 export const NowMS = () => String(Date.now());
 
-export const NowHour = () =>
-  DT.now().setZone('America/Los_Angeles').toFormat('HH:mm');
+export const NowHour = () => DT.now().toFormat('HH:mm');
 
-export const ToHour = (date: number) =>
-  DT.fromMillis(date).setZone('America/Los_Angeles').toFormat('HH:mm');
+export const ToHour = (date: number) => DT.fromMillis(date).toFormat('HH:mm');
 
 export const NowSinceHour = (time: string) => {
-  const diff = DT.now()
-    .setZone('America/Los_Angeles')
-    .diff(DT.fromMillis(Number(time)));
+  const diff = DT.now().diff(DT.fromMillis(Number(time)));
   // Create a Duration object from the difference
   const duration = Duration.fromMillis(diff.as('milliseconds'));
   // Format the duration in hours and minutes
@@ -31,3 +26,5 @@ export const NowSinceHour = (time: string) => {
 //   DT.fromMillis(date).toFormat('MM/dd/yyyy');
 
 export const DateDay = (date: number) => new Date(date).toLocaleDateString();
+
+export const startOfDay = DT.now().startOf('day');
