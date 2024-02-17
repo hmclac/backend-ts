@@ -125,7 +125,7 @@ export class StatsController {
         .createQueryBuilder('swipe')
         .select('swipe.staff_name', 'staff_name')
         .addSelect('COUNT(*)', 'count')
-        .where('CAST(swipe.time_done) AS BIGINT > :oneMonthAgo', {
+        .where('CAST(swipe.time_done AS BIGINT) > :oneMonthAgo', {
           oneMonthAgo: OneMonthAgo()
         })
         .groupBy('swipe.staff_name')
