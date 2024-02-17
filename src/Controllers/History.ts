@@ -2,8 +2,8 @@ import { Controller, Get } from '@overnightjs/core';
 import { Request, Response } from 'express';
 import { DataSource, Repository } from 'typeorm';
 import { Swipe } from '../Models';
-import * as moment from 'moment-timezone';
 import { Required } from '../Util/Middleware';
+import { HHMM, HHMMDDYY } from '../Util/DateTime';
 
 @Controller('history')
 export class HistoryController {
@@ -13,45 +13,67 @@ export class HistoryController {
     this.swipes = dataSource.getRepository(Swipe);
   }
 
-  private async getData(startDate: number, endDate: number) {
-    const swipes = await this.swipes
-      .createQueryBuilder('swipe')
-      .where(
-        'CAST(swipe.time_done AS BIGINT) >= :startDate AND CAST(swipe.time_done AS BIGINT) <= :endDate',
-        {
-          startDate,
-          endDate
-        }
-      )
-      .orderBy('swipe.time_done', 'DESC')
-      .getMany();
-
+  private async getData(startDate: number, endDate?: number) {
     const start = Number(startDate);
-    const end = Number(endDate);
-    const countsPerHour: { [key: string]: number } = {};
     const oneHourInMillis = 3600 * 1000;
+    const countsPerHour: { [key: string]: number } = {};
 
-    for (let hourStart = start; hourStart < end; hourStart += oneHourInMillis) {
-      const date = moment.tz(hourStart, 'America/Los_Angeles');
-      const key = `${date.format('HH:mm MM/DD/YYYY')}`;
-      countsPerHour[key] = 0;
-    }
+    if (endDate) {
+      const swipes = await this.swipes
+        .createQueryBuilder('swipe')
+        .where(
+          'CAST(swipe.time_done AS BIGINT) >= :startDate AND CAST(swipe.time_done AS BIGINT) <= :endDate',
+          {
+            startDate,
+            endDate
+          }
+        )
+        .orderBy('swipe.time_done', 'DESC')
+        .getMany();
 
-    for (const swipe of swipes) {
-      const swipeTime = Number(swipe.time_done);
-      const hourIndex = Math.floor((swipeTime - start) / oneHourInMillis);
-      const hourWindowStart = moment.tz(
-        start + hourIndex * oneHourInMillis,
-        'America/Los_Angeles'
-      );
-      const key = hourWindowStart.format('HH:mm MM/DD/YYYY');
+      const end = Number(endDate);
 
-      if (countsPerHour[key] !== undefined) {
-        countsPerHour[key]++;
-      } else {
+      for (let hourStart = start; hourStart < end; hourStart += oneHourInMillis)
+        countsPerHour[HHMMDDYY(hourStart)] = 0;
+
+      for (const swipe of swipes) {
+        const hourIndex = Math.floor(
+          (Number(swipe.time_done) - start) / oneHourInMillis
+        );
+        const key = HHMMDDYY(start + hourIndex * oneHourInMillis);
+
+        if (countsPerHour[key] !== undefined) countsPerHour[key]++;
+      }
+    } else {
+      endDate = startDate + oneHourInMillis * 24;
+      const swipes = await this.swipes
+        .createQueryBuilder('swipe')
+        .where(
+          'CAST(swipe.time_done AS BIGINT) >= :startDate AND CAST(swipe.time_done AS BIGINT) <= :endDate',
+          {
+            startDate,
+            endDate
+          }
+        )
+        .orderBy('swipe.time_done', 'DESC')
+        .getMany();
+
+      for (
+        let hourStart = start;
+        hourStart < endDate;
+        hourStart += oneHourInMillis
+      )
+        countsPerHour[HHMM(hourStart)] = 0;
+
+      for (const swipe of swipes) {
+        const hourIndex = Math.floor(
+          (Number(swipe.time_done) - start) / oneHourInMillis
+        );
+        const key = HHMM(start + hourIndex * oneHourInMillis);
+
+        if (countsPerHour[key] !== undefined) countsPerHour[key]++;
       }
     }
-
     return {
       labels: Object.keys(countsPerHour).sort(
         (a, b) => new Date(a).getTime() - new Date(b).getTime()
@@ -63,25 +85,42 @@ export class HistoryController {
   }
 
   @Get('/')
-  @Required('query', 'date_start', 'date_end')
+  @Required('query', 'date_start', 'range')
   private async getSwipes(req: Request, res: Response) {
     const query = req.query as SwipePayload;
-    const { date_start, date_end } = query;
-    try {
-      const { data, labels } = await this.getData(
-        Number(date_start),
-        Number(date_end)
-      );
 
-      return res.status(200).json({ data, labels });
-    } catch (e) {
-      console.error(e);
-      return res.status(500).json({ error: 'Internal server error' });
+    if (query.range === 'true') {
+      const { date_start, date_end } = query;
+      console.log(query);
+      if (!date_end) {
+        return res.json({ error: 'Missing date end field' });
+      }
+      try {
+        const { data, labels } = await this.getData(
+          Number(date_start),
+          Number(date_end)
+        );
+
+        return res.status(200).json({ data, labels });
+      } catch (e) {
+        console.error(e);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+    } else {
+      const { date_start } = query;
+      try {
+        const { data, labels } = await this.getData(Number(date_start));
+
+        return res.status(200).json({ data, labels });
+      } catch (e) {
+        console.error(e);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
     }
   }
 }
-
 type SwipePayload = {
   date_start: string;
   date_end: string;
+  range: string;
 };

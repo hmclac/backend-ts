@@ -28,3 +28,8 @@ export const NowSinceHour = (time: string) => {
 export const DateDay = (date: number) => new Date(date).toLocaleDateString();
 
 export const startOfDay = DT.now().startOf('day');
+
+export const HHMMDDYY = (date: number) =>
+  DT.fromMillis(date).toFormat('HH:mm MM/dd/yyyy');
+
+export const HHMM = (date: number) => DT.fromMillis(date).toFormat('HH:mm');

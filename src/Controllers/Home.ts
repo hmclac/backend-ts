@@ -44,7 +44,6 @@ export class HomeController {
       .orderBy('checkout.time_checked_out', 'DESC')
       .getMany();
 
-    // Convert startOfDay to a timestamp or format suitable for your database query
     const startOfDayTimestamp = startOfDay.toMillis();
     const headcounts = await this.headcounts
       .createQueryBuilder('headcount')
@@ -53,14 +52,11 @@ export class HomeController {
       })
       .orderBy('headcount.time_done', 'DESC')
       .getMany();
-
-    // Assuming DateHour is imported or defined elsewhere
-    // and assuming headcounts is an array of headcount entities
+    
     const headcount_labels = headcounts
       .map((hc) => ToHour(Number(hc.time_done)))
       .reverse();
 
-    // Assuming latestHeadcount is the first item of the sorted headcounts array
     const latestHeadcount = headcounts[0];
 
     const bikeData = {};
