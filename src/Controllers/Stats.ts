@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import { DataSource, Repository } from 'typeorm';
 import { Swipe } from '../Models';
 import { Required } from '../Util/Middleware';
-import { HHMM, HHMMDDYY } from '../Util/DateTime';
+import { HHMM, HHMMDDYY, OneMonthAgo } from '../Util/DateTime';
 
 @Controller('stats')
 export class StatsController {
@@ -125,8 +125,10 @@ export class StatsController {
         .createQueryBuilder('swipe')
         .select('swipe.staff_name', 'staff_name')
         .addSelect('COUNT(*)', 'count')
+        .where('swipe.time_done > :oneMonthAgo', { oneMonthAgo: OneMonthAgo() })
         .groupBy('swipe.staff_name')
         .getRawMany();
+
     return res.json(swipeCounts.map((x) => ({ ...x, count: Number(x.count) })));
   }
 }
