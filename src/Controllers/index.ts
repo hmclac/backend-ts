@@ -7,4 +7,4 @@ export * from './Login';
 export * from './Swipe';
 export * from './Admin';
 export * from './Home';
-export * from './History';
+export * from './Stats';

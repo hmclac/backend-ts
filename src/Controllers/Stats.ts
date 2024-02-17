@@ -5,8 +5,8 @@ import { Swipe } from '../Models';
 import { Required } from '../Util/Middleware';
 import { HHMM, HHMMDDYY } from '../Util/DateTime';
 
-@Controller('history')
-export class HistoryController {
+@Controller('stats')
+export class StatsController {
   private swipes: Repository<Swipe>;
 
   constructor(dataSource: DataSource) {
