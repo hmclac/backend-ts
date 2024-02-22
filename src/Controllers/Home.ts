@@ -1,4 +1,4 @@
-import { Controller, Get } from '@overnightjs/core';
+import { Controller, Get, Post } from '@overnightjs/core';
 import { Request, Response } from 'express';
 import { DataSource, Repository } from 'typeorm';
 import {
@@ -9,6 +9,7 @@ import {
 } from '../Models';
 import { Cache } from '../Util/Cache';
 import { DateHour, NowSinceHour, ToHour, startOfDay } from '../Util/DateTime';
+import { Protected } from '../Util/Middleware';
 
 @Controller('/')
 export class HomeController {
@@ -52,7 +53,7 @@ export class HomeController {
       })
       .orderBy('headcount.time_done', 'DESC')
       .getMany();
-    
+
     const headcount_labels = headcounts
       .map((hc) => ToHour(Number(hc.time_done)))
       .reverse();
@@ -82,6 +83,7 @@ export class HomeController {
     }
 
     return res.json({
+      isOpen: Cache.open,
       headcount_labels,
       weightRoom: {
         reserved: latestHeadcount ? latestHeadcount.weight_reserved : false,
@@ -107,5 +109,12 @@ export class HomeController {
       bikeUpdate: Cache.bikeupdate || '',
       checkoutUpdate: Cache.checkoutupdate || ''
     });
+  }
+
+  @Post('/')
+  @Protected('staff', 'body')
+  private async openClose(req: Request, res: Response) {
+    Cache.openClose();
+    return res.json({ isOpen: Cache.open });
   }
 }

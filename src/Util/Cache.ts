@@ -11,6 +11,7 @@ export class Cache {
     cache.set('bikebans', []);
     cache.set('bikeupdate', '');
     cache.set('checkoutupdate', '');
+    cache.set('isopen', false);
     Cache.resetOccupancy();
   }
 
@@ -48,6 +49,9 @@ export class Cache {
   static setCheckoutUpdate(value: string) {
     cache.set('checkoutupdate', value);
   }
+  static openClose() {
+    cache.set('isopen', !Cache.open);
+  }
 
   static get bikeupdate() {
     return cache.get('bikeupdate')!;
@@ -72,6 +76,9 @@ export class Cache {
   }
   static get bikebans(): Staff {
     return cache.get('bikebans')!;
+  }
+  static get open(): boolean {
+    return cache.get('isopen')!;
   }
 
   static occupancy(occtype: Rooms): OccupancyData {
