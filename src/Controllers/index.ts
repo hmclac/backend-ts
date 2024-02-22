@@ -8,3 +8,4 @@ export * from './Swipe';
 export * from './Admin';
 export * from './Home';
 export * from './Stats';
+export * from './BikeNotes';

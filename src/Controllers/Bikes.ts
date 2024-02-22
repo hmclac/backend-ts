@@ -1,4 +1,4 @@
-import { Controller, Post, Put } from '@overnightjs/core';
+import { Controller, Get, Post, Put } from '@overnightjs/core';
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { DataSource, Repository } from 'typeorm';

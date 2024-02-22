@@ -1,11 +1,10 @@
 import { DataSource, Repository, ObjectLiteral, EntityTarget } from 'typeorm';
-import { Bike, Swipe, Headcount, Checkout, Admin } from '../Models';
+import { Bike, Swipe, Headcount, Checkout, Admin, BikeNotes } from '../Models';
 import 'reflect-metadata';
 import { logger } from '../';
 import { config } from '../config';
 
 const { host, username, password, database } = config;
-
 
 interface TypeORMModels {
   [key: string]: Repository<any>;
@@ -20,7 +19,7 @@ const AppDataSource = new DataSource({
   database,
   synchronize: true,
   logging: true,
-  entities: [Bike, Swipe, Headcount, Checkout, Admin], // Include your entities here
+  entities: [Bike, Swipe, Headcount, Checkout, Admin, BikeNotes], // Include your entities here
   subscribers: [],
   migrations: []
 });
@@ -37,9 +36,10 @@ export class TypeORMController {
       checkout: this.dataSource.getRepository(Checkout),
       headcount: this.dataSource.getRepository(Headcount),
       swipe: this.dataSource.getRepository(Swipe),
-      admin: this.dataSource.getRepository(Admin)
+      admin: this.dataSource.getRepository(Admin),
+      bikeNotes: this.dataSource.getRepository(BikeNotes)
     };
-    Object.freeze(this.models); 
+    Object.freeze(this.models);
   }
 
   public async createConnection() {
@@ -65,4 +65,3 @@ export class TypeORMController {
     return this.dataSource;
   }
 }
-
